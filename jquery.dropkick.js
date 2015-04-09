@@ -58,7 +58,7 @@
       changes       : false,
       syncReverse   : true,
       nativeMobile  : true,
-      autoWidth     : true
+      autoWidth     : false
     },
 
     // Make sure that only one dropdown is open the document
@@ -315,7 +315,7 @@
         data = $select.data('dropkick') || {},
 
         // This gets applied to the 'dk_container' element
-        id = $select.attr('id') || $select.attr('name'),
+        id = $select.data('dropkick-id'),
 
         // This gets updated to be equal to the longest <option> element
         width  = settings.width || $select.outerWidth(),
@@ -360,9 +360,19 @@
       $select.before($dk).appendTo($dk);
 
       // Update the reference to $dk
-      $dk = $('div[id="dk_container_' + id + '"]').fadeIn(settings.startSpeed);
+      //DAVIDE: this doesn't work if we're on a fragment..
+      //$dk = $('div[id="dk_container_' + id + '"]').fadeIn(settings.startSpeed);
+
+      $dk.fadeIn(settings.startSpeed);
 
       // Save the current theme
+
+      //DMOLIN: Look also in the data-theme attribute
+      if(!settings.theme && $select.data('theme')) {
+        settings.theme = $select.data('theme');
+      }
+      //--
+
       theme = settings.theme || 'default';
       $dk.addClass('dk_theme_' + theme);
       data.theme = theme;
@@ -447,6 +457,18 @@
     });
   };
 
+  methods.reload = function () {
+      this.destroy();
+      $select.dropkick(data.settings);
+  };
+
+  methods.destroy = function() {
+      var $select = $(this);
+      var data = $select.data('dropkick') || { id: $select.data('dropkick-id') };
+      $select.removeData("dropkick");
+      $("#dk_container_"+ data.id).remove();
+  };
+
   methods.setValue = function (value) {
     return this.each(function () {
       var
@@ -468,12 +490,15 @@
     return this.each(function () {
       var
         data          = $(this).data('dropkick'),
-        $select       = data.$select,
+        $select       = data['$select'],
         $dk           = data.$dk,
         $current,
         $dkopts
       ;
-      // Update data options      
+
+      if(!$select) return;
+
+      // Update data options
       data.options  = $select.find('option');
       // Rebuild options list. filter options inner and replace
       $dkopts = build(dropdownTemplate, data).find('.dk_options_inner');
